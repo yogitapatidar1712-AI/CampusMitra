@@ -2,6 +2,8 @@
 > **Option-Based WhatsApp Assistant for Students & Faculty**  
 > Built for the Chancellor's Brigade | MU ANANT 1.0 Hackathon
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yogitapatidar1712-AI/CampusMitra)
+
 CampusMitra AI is an authentic WhatsApp-style, option-based campus assistant delivering verified student records from Mandsaur University. It enforces strict student authentication, zero unauthorized data exposure, and real-time faculty availability synchronization.
 
 ---
