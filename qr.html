@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp QR Generator | CampusMitra</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wa: {
+              bg: '#0b141a',
+              card: '#111b21',
+              header: '#202c33',
+              border: '#222d34',
+              teal: '#00a884',
+              green: '#25D366',
+              input: '#2a3942'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- QRCode.js Library CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0b141a] text-gray-100 transition-colors duration-200 flex flex-col justify-between antialiased">
+
+  <!-- HEADER -->
+  <header class="border-b border-wa-border bg-wa-card px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-700 via-teal-600 to-emerald-500 flex items-center justify-center text-white shadow">
+        <i data-lucide="qr-code" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white tracking-wide">CampusMitra WhatsApp QR Generator</h1>
+        <p class="text-xs text-wa-teal">Mandsaur University • Official Assistant QR Gateway</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="app.html" class="text-xs bg-wa-header hover:bg-wa-input text-gray-200 px-3.5 py-1.5 rounded-lg border border-wa-border flex items-center gap-1.5 transition">
+        <i data-lucide="message-square" class="w-3.5 h-3.5 text-wa-green"></i>
+        <span>Student App</span>
+      </a>
+      <!-- Dark/Light Mode Toggle -->
+      <button id="theme-toggle" type="button" class="w-9 h-9 rounded-xl border border-wa-border bg-wa-header flex items-center justify-center text-gray-300 hover:text-wa-teal transition" title="Toggle Theme">
+        <i id="theme-icon" data-lucide="sun" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex items-center">
+
+    <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6 bg-wa-card border border-wa-border rounded-3xl p-6 sm:p-8 shadow-2xl items-center">
+
+      <!-- LEFT: FORM INPUTS -->
+      <div class="space-y-5">
+        <div>
+          <h2 class="text-lg font-bold text-white">Generate WhatsApp QR</h2>
+          <p class="text-xs text-gray-400 mt-1">
+            Create an instant entry point for students to message CampusMitra.
+          </p>
+        </div>
+
+        <!-- 1. Bot Phone Number -->
+        <div>
+          <label for="bot-number" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+            Bot WhatsApp Number
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <i data-lucide="phone" class="w-4 h-4"></i>
+            </div>
+            <input
+              type="text"
+              id="bot-number"
+              value="+1 737 250 8034"
+              placeholder="+1 737 250 8034"
+              class="w-full text-sm font-mono bg-wa-input text-white rounded-xl pl-10 pr-4 py-3 border border-wa-border focus:outline-none focus:border-wa-teal transition"
+            />
+          </div>
+          <span class="text-[10px] text-gray-400 mt-1 block">Target bot recipient number (e.g. +17372508034)</span>
+        </div>
+
+        <!-- 2. Pre-filled Message -->
+        <div>
+          <label for="prefill-message" class="block text-xs font-semibold uppercase tracking-wider text-gray-300 mb-1.5">
+            Pre-Filled Message
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+            </div>
+            <input
+              type="text"
+              id="prefill-message"
+              value="Hi"
+              placeholder="Hi"
+              class="w-full text-sm bg-wa-input text-white rounded-xl pl-10 pr-4 py-3 border border-wa-border focus:outline-none focus:border-wa-teal transition"
+            />
+          </div>
+          <span class="text-[10px] text-gray-400 mt-1 block">Default message filled in the student's WhatsApp chat</span>
+        </div>
+
+        <!-- IMPORTANT NOTE -->
+        <div class="bg-emerald-950/40 border border-emerald-800/60 rounded-xl p-3.5 text-xs text-emerald-300 flex items-start gap-2.5">
+          <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+          <p class="leading-relaxed">
+            The QR opens WhatsApp with the bot number. The student's own number is read automatically by WhatsApp.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT: LIVE QR PREVIEW & ACTIONS -->
+      <div class="flex flex-col items-center text-center p-4 bg-[#0b141a]/60 border border-wa-border rounded-2xl">
+        <span class="text-xs font-semibold uppercase tracking-wider text-wa-teal mb-3 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-wa-green animate-pulse"></span>
+          Live Scannable QR
+        </span>
+
+        <!-- QR Display Canvas -->
+        <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center justify-center min-w-[240px] min-h-[240px]">
+          <div id="qrcode-container" class="flex items-center justify-center"></div>
+        </div>
+
+        <!-- Constructed URL Display -->
+        <div class="w-full mt-4">
+          <input
+            type="text"
+            id="generated-link"
+            readonly
+            class="w-full text-xs font-mono bg-wa-input text-emerald-400 rounded-xl px-3 py-2 text-center border border-wa-border select-all focus:outline-none"
+          />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="w-full grid grid-cols-2 gap-2.5 mt-3">
+          <button
+            type="button"
+            onclick="copyLink()"
+            id="copy-btn"
+            class="py-2.5 px-3 rounded-xl bg-wa-header hover:bg-wa-input text-white text-xs font-medium border border-wa-border flex items-center justify-center gap-1.5 transition active:scale-95"
+          >
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copy-btn-text">Copy Link</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="downloadQR()"
+            class="py-2.5 px-3 rounded-xl bg-wa-green hover:bg-emerald-500 text-[#0b141a] text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95 shadow"
+          >
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download PNG</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="py-4 text-center text-xs text-gray-500 border-t border-wa-border">
+    Answers come only from MU verified records. • Mandsaur University ANANT 1.0 Hackathon
+  </footer>
+
+  <script>
+    let qrInstance = null;
+
+    function sanitizeBotNumber(val) {
+      return (val || "").replace(/[^\d+]/g, "").replace(/\+/g, "");
+    }
+
+    function constructUrl() {
+      const rawNum = document.getElementById('bot-number').value;
+      const cleanDigits = sanitizeBotNumber(rawNum);
+      const msg = document.getElementById('prefill-message').value || "Hi";
+
+      let url = "https://wa.me/" + cleanDigits;
+      if (msg.trim()) {
+        url += "?text=" + encodeURIComponent(msg.trim());
+      }
+      return url;
+    }
+
+    function renderQR() {
+      const container = document.getElementById('qrcode-container');
+      const url = constructUrl();
+      document.getElementById('generated-link').value = url;
+
+      container.innerHTML = "";
+
+      try {
+        qrInstance = new QRCode(container, {
+          text: url,
+          width: 200,
+          height: 200,
+          colorDark: "#075E54",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function copyLink() {
+      const link = document.getElementById('generated-link').value;
+      const btnText = document.getElementById('copy-btn-text');
+      navigator.clipboard.writeText(link).then(() => {
+        btnText.textContent = "Copied!";
+        setTimeout(() => btnText.textContent = "Copy Link", 2000);
+      }).catch(() => {
+        document.getElementById('generated-link').select();
+        document.execCommand('copy');
+        btnText.textContent = "Copied!";
+        setTimeout(() => btnText.textContent = "Copy Link", 2000);
+      });
+    }
+
+    function downloadQR() {
+      const canvas = document.querySelector('#qrcode-container canvas');
+      const img = document.querySelector('#qrcode-container img');
+      let dataUrl = canvas ? canvas.toDataURL("image/png") : (img ? img.src : null);
+
+      if (!dataUrl) return;
+
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "campusmitra-whatsapp-qr.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      document.getElementById('bot-number').addEventListener('input', renderQR);
+      document.getElementById('prefill-message').addEventListener('input', renderQR);
+      renderQR();
+    });
+  </script>
+</body>
+</html>

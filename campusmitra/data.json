@@ -1,0 +1,100 @@
+{
+  "students": {
+    "MU2024001": {
+      "name": "Demo Student",
+      "enrollment": "MU2024001",
+      "course": "B.Tech CSE, 2nd Year",
+      "fees": [
+        {
+          "item": "Tuition Fee",
+          "amount": 40000,
+          "paid": true
+        },
+        {
+          "item": "Exam Fee",
+          "amount": 2500,
+          "paid": false
+        },
+        {
+          "item": "Library Fee",
+          "amount": 500,
+          "paid": false
+        }
+      ],
+      "fee_due_date": "15 October",
+      "fee_pay_link": "https://example.com/pay-demo",
+      "documents": [
+        {
+          "name": "Aadhaar Card",
+          "submitted": true
+        },
+        {
+          "name": "10th and 12th Marksheets",
+          "submitted": true
+        },
+        {
+          "name": "Passport-size Photos",
+          "submitted": false
+        },
+        {
+          "name": "Bonafide Certificate",
+          "submitted": false
+        },
+        {
+          "name": "Income Certificate",
+          "submitted": false
+        }
+      ],
+      "doc_due_date": "20 October",
+      "doc_drive_link": "https://drive.google.com/your-checklist-link",
+      "scholarship": {
+        "status": "Form not submitted",
+        "last_date": "25 October",
+        "note": "Eligible if family income is below the limit. Verify at the Scholarship Cell."
+      },
+      "bus": {
+        "route": "Narsimhapur to Campus",
+        "pass": "Expired on 30 September"
+      },
+      "phones": [
+        "919999900001"
+      ],
+      "dob": "01-01-2005"
+    }
+  },
+  "faculty": {
+    "f1": {
+      "name": "Prof. Sharma",
+      "dept": "Computer Science",
+      "phone": "919999900002",
+      "available": true
+    },
+    "f2": {
+      "name": "Prof. Verma",
+      "dept": "Mathematics",
+      "phone": "",
+      "available": false
+    },
+    "f3": {
+      "name": "Prof. Khan",
+      "dept": "Physics",
+      "phone": "",
+      "available": true
+    }
+  },
+  "deadlines": [
+    {
+      "date": "15 October",
+      "what": "Exam Fee and Library Fee"
+    },
+    {
+      "date": "20 October",
+      "what": "Pending documents"
+    },
+    {
+      "date": "25 October",
+      "what": "Scholarship form last date"
+    }
+  ],
+  "admin_contact": "Admin Office, MU Campus (add phone/email here)"
+}

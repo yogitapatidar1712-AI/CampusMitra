@@ -1,0 +1,32 @@
+# Environment variables & secrets (CRITICAL: Do not commit)
+.env
+.env.*
+.env.local
+!.env.example
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python caches & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+
+# Executables & temporary tunnel binaries
+*.exe
+cloudflared*
+ngrok*
+tunnel_url.txt
+
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

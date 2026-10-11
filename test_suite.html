@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CampusMitra Automated Test Suite (Phone + QR Flow)</title>
+  <script src="data.js"></script>
+  <script src="bot.js"></script>
+</head>
+<body>
+  <h1>Test Suite Results</h1>
+  <div id="results"></div>
+
+  <script>
+    const results = [];
+    function assert(desc, condition) {
+      if (condition) {
+        results.push({ desc: desc, status: "PASS" });
+        console.log("PASS: " + desc);
+      } else {
+        results.push({ desc: desc, status: "FAIL" });
+        console.error("FAIL: " + desc);
+      }
+    }
+
+    try {
+      // -------------------------------------------------------------
+      // TEST 1: Registered number: Hi -> OTP bubble -> correct OTP -> Welcome -> Menu
+      // -------------------------------------------------------------
+      const ankitPhone = "+919876541001";
+      let s1 = CampusBot.createSession(ankitPhone);
+      
+      // Step A: Send "Hi" from registered number
+      let resHi = CampusBot.handle(s1, "Hi", ankitPhone, MU_DATA);
+      assert("State is AWAIT_OTP after Hi", s1.state === 'AWAIT_OTP');
+      assert("OTP is generated (6 digits)", s1.otp && s1.otp.length === 6);
+
+      const hiText = resHi.map(r => r.text).join(' ');
+      assert("Greeting mentions 6-digit OTP", hiText.includes("6-digit OTP"));
+      assert("Greeting mentions mobile ending 1001", hiText.includes("1001"));
+
+      const smsBubble = resHi.find(r => r.type === 'sms');
+      assert("Demo SMS bubble exists with OTP", smsBubble && smsBubble.text.includes(s1.otp));
+
+      // Step B: Send menu number BEFORE OTP verification -> Rejected
+      let earlyMenuRes = CampusBot.handle(s1, "1", ankitPhone, MU_DATA);
+      assert("Menu number before OTP rejected", earlyMenuRes[0].text.includes("Please enter the OTP first."));
+      assert("State remains AWAIT_OTP", s1.state === 'AWAIT_OTP');
+
+      // Step C: Send correct OTP -> Verified!
+      let otpRes = CampusBot.handle(s1, s1.otp, ankitPhone, MU_DATA);
+      assert("State is AUTH after valid OTP", s1.state === 'AUTH');
+      assert("Logged in student is Ankit", s1.student && s1.student.name === "Ankit");
+
+      const otpText = otpRes.map(r => r.text).join(' ');
+      assert("Welcome message includes Ankit", otpText.includes("Ankit") && otpText.includes("Verified! Welcome"));
+      assert("Main menu is displayed with options", otpText.includes("1️⃣ Fees") && otpText.includes("5️⃣ Faculty Status"));
+
+      // -------------------------------------------------------------
+      // TEST 2: Unregistered number: "not registered" message
+      // -------------------------------------------------------------
+      const unregPhone = "+917000012345";
+      let s2 = CampusBot.createSession(unregPhone);
+      let resUnreg = CampusBot.handle(s2, "Hi", unregPhone, MU_DATA);
+      assert("State is NOT_REGISTERED", s2.state === 'NOT_REGISTERED');
+      assert("Not registered message returned", resUnreg[0].text.includes("This number is not registered with Mandsaur University"));
+
+      // Sending another message to unregistered session does not proceed
+      let resUnreg2 = CampusBot.handle(s2, "1", unregPhone, MU_DATA);
+      assert("Unregistered session remains blocked", resUnreg2[0].text.includes("This number is not registered with Mandsaur University"));
+
+      // -------------------------------------------------------------
+      // TEST 3: Wrong OTP x3 -> Blocked
+      // -------------------------------------------------------------
+      let s3 = CampusBot.createSession(ankitPhone);
+      CampusBot.handle(s3, "Hi", ankitPhone, MU_DATA); // Generates OTP
+
+      // Attempt 1: Wrong OTP
+      let fail1 = CampusBot.handle(s3, "000000", ankitPhone, MU_DATA);
+      assert("Attempt 1 fails (2 attempts left)", fail1[0].text.includes("Incorrect OTP. 2 attempts left."));
+      assert("State is still AWAIT_OTP", s3.state === 'AWAIT_OTP');
+
+      // Attempt 2: Wrong OTP
+      let fail2 = CampusBot.handle(s3, "111111", ankitPhone, MU_DATA);
+      assert("Attempt 2 fails (1 attempt left)", fail2[0].text.includes("Incorrect OTP. 1 attempt left."));
+
+      // Attempt 3: Wrong OTP
+      let fail3 = CampusBot.handle(s3, "222222", ankitPhone, MU_DATA);
+      assert("Attempt 3 triggers BLOCKED", s3.state === 'BLOCKED');
+      assert("Blocked message asks to scan QR again", fail3[0].text.includes("Too many attempts. Please scan the QR again."));
+
+      // Any message while blocked remains blocked
+      let failPost = CampusBot.handle(s3, "Hi", ankitPhone, MU_DATA);
+      assert("Further input remains blocked", failPost[0].text.includes("Too many attempts. Please scan the QR again."));
+
+      // -------------------------------------------------------------
+      // TEST 4: Resend OTP functionality (max 2 times)
+      // -------------------------------------------------------------
+      let s4 = CampusBot.createSession(ankitPhone);
+      CampusBot.handle(s4, "Hi", ankitPhone, MU_DATA);
+      const firstOtp = s4.otp;
+
+      // Resend 1
+      let resend1 = CampusBot.handle(s4, "resend", ankitPhone, MU_DATA);
+      assert("Resend 1 generated new OTP", s4.otp !== firstOtp);
+      assert("Resend 1 count is 1", s4.resendCount === 1);
+      assert("Resend 1 returned new SMS bubble", resend1.find(r => r.type === 'sms') !== undefined);
+
+      const secondOtp = s4.otp;
+
+      // Resend 2
+      let resend2 = CampusBot.handle(s4, "resend", ankitPhone, MU_DATA);
+      assert("Resend 2 generated new OTP", s4.otp !== secondOtp);
+      assert("Resend 2 count is 2", s4.resendCount === 2);
+
+      // Resend 3 (Exceeds limit)
+      let resend3 = CampusBot.handle(s4, "resend", ankitPhone, MU_DATA);
+      assert("Resend 3 rejected (Max reached)", resend3[0].text.includes("Maximum OTP resends reached"));
+
+      // -------------------------------------------------------------
+      // TEST 5: Options 1-7 work, invalid rejected, '0' returns to menu
+      // -------------------------------------------------------------
+      // Option 1: Fees
+      let feeRes = CampusBot.handle(s1, "1", ankitPhone, MU_DATA);
+      assert("Option 1 shows Ankit fees due ₹3,000", feeRes[0].text.includes("3,000"));
+
+      // Sub-option 1: Pay by QR
+      let qrRes = CampusBot.handle(s1, "1", ankitPhone, MU_DATA);
+      assert("Fees sub-option 1 returns QR", qrRes[0].type === 'qr');
+
+      // '0' returns to menu
+      let backRes = CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+      assert("'0' returns to Main Menu", backRes[0].text.includes("What do you need help with?"));
+
+      // Option 2: Documents
+      let docRes = CampusBot.handle(s1, "2", ankitPhone, MU_DATA);
+      assert("Option 2 shows Documents checklist", docRes[0].text.includes("DOCUMENT CHECKLIST"));
+
+      CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+
+      // Option 3: Scholarship
+      let schRes = CampusBot.handle(s1, "3", ankitPhone, MU_DATA);
+      assert("Option 3 evaluates OBC Scholarship for Ankit", schRes[0].text.includes("OBC Scholarship"));
+
+      CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+
+      // Option 4: Bus Pass
+      let busRes = CampusBot.handle(s1, "4", ankitPhone, MU_DATA);
+      assert("Option 4 shows Route 3 and Expired", busRes[0].text.includes("Route 3") && busRes[0].text.includes("Expired"));
+
+      CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+
+      // Option 5: Faculty Status
+      let facRes = CampusBot.handle(s1, "5", ankitPhone, MU_DATA);
+      assert("Option 5 lists faculty members", facRes[0].text.includes("Prof. Nidhi") && facRes[0].text.includes("Prof. Ranu"));
+
+      CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+
+      // Option 6: Alerts & Deadlines
+      let alertRes = CampusBot.handle(s1, "6", ankitPhone, MU_DATA);
+      assert("Option 6 shows upcoming deadlines", alertRes[0].text.includes("Mid-Semester Examination"));
+
+      CampusBot.handle(s1, "0", ankitPhone, MU_DATA);
+
+      // Option 7: Change Language
+      let langRes = CampusBot.handle(s1, "7", ankitPhone, MU_DATA);
+      assert("Language switched to Hindi", s1.lang === 'hi');
+      assert("Hindi menu displayed", langRes.map(r => r.text).join(' ').includes("फीस"));
+
+      CampusBot.handle(s1, "7", ankitPhone, MU_DATA); // Switch back to English
+
+      // Invalid option rejected
+      let invRes = CampusBot.handle(s1, "99", ankitPhone, MU_DATA);
+      assert("Invalid option 99 is rejected", invRes[0].text.includes("Please choose a number from the menu"));
+
+      // Free text rejected
+      let freeRes = CampusBot.handle(s1, "Where is the library?", ankitPhone, MU_DATA);
+      assert("Free text is rejected with menu prompt", freeRes[0].text.includes("Please choose a number from the menu"));
+
+      // -------------------------------------------------------------
+      // TEST 6: Student A can never see Student B's data
+      // -------------------------------------------------------------
+      // Test Nikhil Sharma (+919876542002, General, MMVY)
+      const nikhilPhone = "+919876542002";
+      let sNikhil = CampusBot.createSession(nikhilPhone);
+      CampusBot.handle(sNikhil, "Hi", nikhilPhone, MU_DATA);
+      CampusBot.handle(sNikhil, sNikhil.otp, nikhilPhone, MU_DATA);
+
+      let nikhilSch = CampusBot.handle(sNikhil, "3", nikhilPhone, MU_DATA)[0].text;
+      assert("Nikhil gets MMVY General Scholarship (NOT OBC/SC)", nikhilSch.includes("Mukhyamantri Medhavi") && !nikhilSch.includes("SC Welfare") && !nikhilSch.includes("OBC Scholarship"));
+
+      // Test Jitendra Solanki (+919876543003, SC, ₹6,000 due, Post-Matric SC Welfare)
+      const jitendraPhone = "+919876543003";
+      let sJitendra = CampusBot.createSession(jitendraPhone);
+      CampusBot.handle(sJitendra, "Hi", jitendraPhone, MU_DATA);
+      CampusBot.handle(sJitendra, sJitendra.otp, jitendraPhone, MU_DATA);
+
+      let jitFee = CampusBot.handle(sJitendra, "1", jitendraPhone, MU_DATA)[0].text;
+      assert("Jitendra sees ₹6,000 due (NOT ₹3,000)", jitFee.includes("6,000") && !jitFee.includes("3,000"));
+
+      CampusBot.handle(sJitendra, "0", jitendraPhone, MU_DATA);
+
+      let jitSch = CampusBot.handle(sJitendra, "3", jitendraPhone, MU_DATA)[0].text;
+      assert("Jitendra gets SC Welfare Scheme (NOT MMVY/OBC)", jitSch.includes("SC Welfare") && !jitSch.includes("Mukhyamantri Medhavi") && !jitSch.includes("OBC Scholarship"));
+
+      CampusBot.handle(sJitendra, "0", jitendraPhone, MU_DATA);
+
+      let jitBus = CampusBot.handle(sJitendra, "4", jitendraPhone, MU_DATA)[0].text;
+      assert("Jitendra sees Route 1 (Daloda)", jitBus.includes("Route 1") && !jitBus.includes("Route 3") && !jitBus.includes("Route 7"));
+
+      // -------------------------------------------------------------
+      // TEST 7: Faculty Live Sync
+      // -------------------------------------------------------------
+      s1.liveFaculty = [
+        { id: "fac_nidhi", name: "Prof. Nidhi", department: "HOD Computer Science", available: true, updatedAt: "01:00 PM" },
+        { id: "fac_ranu", name: "Prof. Ranu", department: "CSE Department", available: true, updatedAt: "01:05 PM" },
+        { id: "fac_verma", name: "Dr. Verma", department: "Dean / Administration", available: false, updatedAt: "01:10 PM" }
+      ];
+      let liveFacRes = CampusBot.handle(s1, "5", ankitPhone, MU_DATA);
+      assert("Live faculty sync shows Dr. Verma Not available", liveFacRes[0].text.includes("Dr. Verma") && liveFacRes[0].text.includes("🔴 Not available"));
+
+      // -------------------------------------------------------------
+      // TEST 8: Logout Command
+      // -------------------------------------------------------------
+      let logoutRes = CampusBot.handle(s1, "logout", ankitPhone, MU_DATA);
+      assert("Logout returns to INIT state", s1.state === 'INIT');
+      assert("Student session cleared on logout", s1.student === null);
+      assert("Logout message asks to scan QR again", logoutRes[0].text.includes("You have been logged out"));
+
+      // Summary rendering in DOM
+      const dom = document.getElementById("results");
+      let allPass = true;
+      results.forEach(r => {
+        if (r.status !== "PASS") allPass = false;
+        const p = document.createElement("p");
+        p.textContent = `[${r.status}] ${r.desc}`;
+        p.style.color = r.status === "PASS" ? "green" : "red";
+        dom.appendChild(p);
+      });
+
+      const summary = document.createElement("h2");
+      summary.id = "test-summary";
+      summary.textContent = allPass ? `ALL ${results.length} TESTS PASSED!` : "SOME TESTS FAILED";
+      summary.style.color = allPass ? "green" : "red";
+      dom.prepend(summary);
+
+    } catch (e) {
+      console.error("Test Suite Runtime Error:", e);
+      const errEl = document.createElement("p");
+      errEl.textContent = "CRITICAL ERROR: " + e.message;
+      errEl.style.color = "red";
+      document.getElementById("results").appendChild(errEl);
+    }
+  </script>
+</body>
+</html>

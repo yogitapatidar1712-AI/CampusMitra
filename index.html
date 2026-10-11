@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CampusMitra | WhatsApp Campus Assistant</title>
+
+  <!-- Google Fonts: Inter & Segoe UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wa: {
+              bg: '#111b21',
+              chatBg: '#0b141a',
+              header: '#202c33',
+              sent: '#005c4b',
+              received: '#202c33',
+              teal: '#00a884',
+              greenLight: '#25D366',
+              text: '#e9edef',
+              textMuted: '#8696a0',
+              input: '#2a3942',
+              border: '#222d34'
+            }
+          },
+          fontFamily: {
+            sans: ['"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Central MU Database & Pure Bot Logic Engine -->
+  <script src="data.js"></script>
+  <script src="bot.js"></script>
+
+  <style>
+    /* WhatsApp Background Wallpaper */
+    .wa-wallpaper {
+      background-color: #0b141a;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                        radial-gradient(rgba(255, 255, 255, 0.05) 1px, #0b141a 1px);
+      background-size: 24px 24px;
+      background-position: 0 0, 12px 12px;
+    }
+
+    /* Custom Slim Scrollbar */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(134, 150, 160, 0.2);
+      border-radius: 9999px;
+    }
+
+    /* WhatsApp Authentic Message Tails */
+    .bubble-sent {
+      position: relative;
+    }
+    .bubble-sent::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -7px;
+      width: 0;
+      height: 0;
+      border-top: 9px solid #005c4b;
+      border-right: 8px solid transparent;
+    }
+
+    .bubble-received {
+      position: relative;
+    }
+    .bubble-received::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -7px;
+      width: 0;
+      height: 0;
+      border-top: 9px solid #202c33;
+      border-left: 8px solid transparent;
+    }
+
+    /* Typing Dots Pulse */
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+    .typing-dot-1 { animation: typingDot 1.2s infinite ease-in-out; }
+    .typing-dot-2 { animation: typingDot 1.2s infinite ease-in-out 0.2s; }
+    .typing-dot-3 { animation: typingDot 1.2s infinite ease-in-out 0.4s; }
+  </style>
+</head>
+<body class="bg-[#0c1317] text-wa-text font-sans antialiased h-screen w-screen overflow-hidden flex items-center justify-center select-none">
+
+  <!-- =======================================================================
+       PHONE-SIZED CENTERED CONTAINER (MAX-WIDTH 420PX)
+       ======================================================================= -->
+  <div class="w-full h-full sm:h-[94vh] sm:max-h-[860px] sm:max-w-[420px] flex flex-col bg-wa-chatBg sm:rounded-3xl overflow-hidden shadow-2xl border border-wa-border relative">
+
+    <!-- =====================================================================
+         SCREEN 1: SCAN TO START CAMPUSMITRA (PRE-CHAT QR SCREEN)
+         Shows ZERO student names, categories, or departments.
+         ===================================================================== -->
+    <div id="start-screen" class="flex-1 flex flex-col p-6 overflow-y-auto wa-wallpaper custom-scroll justify-between z-30">
+      
+      <!-- Top Branding -->
+      <div class="text-center pt-2">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-800 flex items-center justify-center text-white font-bold text-xl shadow-lg border border-emerald-500/30">
+          CM
+        </div>
+        <h2 class="text-lg font-bold text-white mt-3 tracking-tight">CampusMitra</h2>
+        <p class="text-xs text-wa-teal font-medium">Mandsaur University Official Assistant</p>
+      </div>
+
+      <!-- Center QR Card -->
+      <div class="bg-wa-header border border-wa-border rounded-2xl p-5 text-center shadow-xl my-4">
+        <h3 class="text-sm font-semibold text-white mb-1">Scan to start CampusMitra</h3>
+        <p class="text-[11px] text-wa-textMuted mb-4">Open camera or WhatsApp scanner to start</p>
+
+        <!-- QR Code Placeholder Graphic -->
+        <div class="bg-white p-3 rounded-xl mx-auto w-48 h-48 flex items-center justify-center shadow-inner">
+          <svg class="w-40 h-40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" fill="#ffffff" />
+            <!-- Corners -->
+            <rect x="8" y="8" width="26" height="26" fill="#075E54" rx="3"/>
+            <rect x="12" y="12" width="18" height="18" fill="#fff" rx="2"/>
+            <rect x="16" y="16" width="10" height="10" fill="#075E54" rx="1"/>
+
+            <rect x="66" y="8" width="26" height="26" fill="#075E54" rx="3"/>
+            <rect x="70" y="12" width="18" height="18" fill="#fff" rx="2"/>
+            <rect x="74" y="16" width="10" height="10" fill="#075E54" rx="1"/>
+
+            <rect x="8" y="66" width="26" height="26" fill="#075E54" rx="3"/>
+            <rect x="12" y="70" width="18" height="18" fill="#fff" rx="2"/>
+            <rect x="16" y="74" width="10" height="10" fill="#075E54" rx="1"/>
+
+            <!-- Pattern Blocks -->
+            <rect x="40" y="10" width="8" height="8" fill="#075E54"/>
+            <rect x="52" y="10" width="8" height="8" fill="#075E54"/>
+            <rect x="40" y="22" width="18" height="6" fill="#075E54"/>
+            <rect x="40" y="34" width="6" height="18" fill="#075E54"/>
+            <rect x="52" y="44" width="10" height="6" fill="#075E54"/>
+            <rect x="10" y="44" width="10" height="8" fill="#075E54"/>
+            <rect x="24" y="44" width="12" height="14" fill="#075E54"/>
+            <rect x="66" y="42" width="14" height="6" fill="#075E54"/>
+            <rect x="82" y="42" width="10" height="8" fill="#075E54"/>
+            <rect x="66" y="54" width="6" height="16" fill="#075E54"/>
+            <rect x="76" y="54" width="16" height="6" fill="#075E54"/>
+            <rect x="40" y="66" width="6" height="26" fill="#075E54"/>
+            <rect x="52" y="66" width="12" height="6" fill="#075E54"/>
+            <rect x="52" y="76" width="18" height="14" fill="#075E54"/>
+            <rect x="74" y="74" width="18" height="8" fill="#075E54"/>
+            <rect x="74" y="86" width="8" height="8" fill="#075E54"/>
+
+            <!-- Center WhatsApp Icon -->
+            <circle cx="50" cy="50" r="10" fill="#25D366"/>
+            <path d="M46 53c1.5 2 3.5 3 5 3.5l1.5-1.5c.3-.3.8-.4 1.2-.2l2 .7c.5.2.8.7.8 1.2v1.8c0 .6-.5 1-1.1 1-6.5-.5-11-5-11.5-11.5 0-.6.4-1.1 1-1.1h1.8c.5 0 1 .3 1.2.8l.7 2c.2.4.1.9-.2 1.2L46 53z" fill="#fff"/>
+          </svg>
+        </div>
+
+        <p class="text-[10px] text-wa-textMuted mt-3">
+          The QR opens WhatsApp with the bot number. The student's own number is read automatically by WhatsApp.
+        </p>
+      </div>
+
+      <!-- Bottom Simulation Drawer -->
+      <div class="space-y-3">
+        <!-- Masked Phone Dropdown -->
+        <div>
+          <label for="demo-phone-select" class="block text-[11px] font-semibold text-wa-textMuted uppercase tracking-wider mb-1.5">
+            Demo: scanning from this phone
+          </label>
+          <div class="relative">
+            <select id="demo-phone-select" class="w-full text-xs font-mono bg-wa-input text-white rounded-xl px-3 py-2.5 border border-wa-border focus:outline-none focus:border-wa-teal transition appearance-none">
+              <option value="+919876541001">+91 98XXXXX001</option>
+              <option value="+919876542002">+91 98XXXXX002</option>
+              <option value="+919876543003">+91 98XXXXX003</option>
+              <option value="+917000012345">+91 70000XXXXX (not registered)</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-wa-textMuted">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulate Scan Button -->
+        <button type="button" onclick="startSimulatedScan()" class="w-full py-3 rounded-xl bg-wa-greenLight hover:bg-emerald-500 text-[#0b141a] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition active:scale-95 shadow-lg shadow-emerald-950/40">
+          <i data-lucide="scan-line" class="w-4 h-4"></i>
+          <span>Simulate Scan</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- =====================================================================
+         SCREEN 2: WHATSAPP CHAT APPLICATION WINDOW
+         Revealed automatically upon scan simulation.
+         ===================================================================== -->
+    <div id="chat-window" class="hidden flex-1 flex flex-col overflow-hidden relative">
+
+      <!-- WhatsApp Web Header -->
+      <header class="h-16 bg-wa-header border-b border-wa-border px-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
+        <div class="flex items-center gap-3">
+          <!-- Avatar -->
+          <div class="relative cursor-pointer">
+            <div id="header-avatar-initials" class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white font-bold text-sm shadow">
+              CM
+            </div>
+            <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-wa-teal flex items-center justify-center text-white border-2 border-wa-header">
+              <i data-lucide="check" class="w-2 h-2 stroke-[3]"></i>
+            </div>
+          </div>
+
+          <!-- Title & Subtitle -->
+          <div class="leading-tight">
+            <!-- Requirement: Show ONLY "CampusMitra" before verification, and "CampusMitra • <Student Name>" after verification -->
+            <h1 id="header-title" class="text-sm font-semibold text-wa-text tracking-wide">CampusMitra</h1>
+            <div id="header-subtitle" class="text-[11px] text-wa-teal flex items-center gap-1 font-medium">
+              <span>online</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action: Scan Again / Reset -->
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="returnToStartScreen()" class="px-2.5 py-1.5 rounded-lg text-xs bg-wa-input hover:bg-rose-950/70 hover:text-rose-400 text-wa-textMuted border border-wa-border/80 flex items-center gap-1.5 transition active:scale-95" title="Return to QR scanner">
+            <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+            <span>Scan again</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages Stream Container -->
+      <div id="messages-container" class="flex-1 overflow-y-auto px-3.5 py-4 space-y-3 wa-wallpaper custom-scroll">
+        
+        <!-- Date Stamp -->
+        <div class="flex justify-center mb-2">
+          <span class="bg-wa-header/90 border border-wa-border/50 text-wa-textMuted text-[10px] uppercase font-semibold px-2.5 py-0.5 rounded shadow-sm">
+            TODAY
+          </span>
+        </div>
+
+        <!-- Messages List -->
+        <div id="messages-list" class="space-y-2.5">
+          <!-- Dynamically injected via JavaScript -->
+        </div>
+
+        <!-- Typing Indicator Bubble -->
+        <div id="typing-indicator" class="hidden flex items-start gap-2">
+          <div class="bg-wa-received border border-wa-border/50 px-4 py-2.5 rounded-2xl rounded-tl-sm text-wa-textMuted text-xs flex items-center gap-1.5 shadow bubble-received">
+            <span class="w-1.5 h-1.5 rounded-full bg-wa-teal typing-dot-1"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-wa-teal typing-dot-2"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-wa-teal typing-dot-3"></span>
+            <span class="text-[11px] ml-1 text-wa-textMuted">typing...</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Chat Input Bar -->
+      <footer class="h-16 bg-wa-header px-3 flex items-center gap-2 border-t border-wa-border shrink-0 z-20">
+        <div class="text-wa-textMuted px-1">
+          <i data-lucide="message-circle" class="w-5 h-5 text-wa-teal/70"></i>
+        </div>
+
+        <form id="chat-form" onsubmit="onFormSubmit(event)" class="flex-1 flex items-center">
+          <input
+            type="text"
+            id="user-input"
+            placeholder="Type a message or OTP..."
+            class="w-full bg-wa-input text-wa-text placeholder-wa-textMuted text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none border border-transparent focus:border-wa-teal/60 transition"
+            autocomplete="off"
+          />
+        </form>
+
+        <button type="button" id="send-btn" onclick="sendMessageFromInput()" class="w-9 h-9 rounded-full bg-wa-teal hover:bg-emerald-500 text-white flex items-center justify-center transition active:scale-90 shadow">
+          <i data-lucide="send" class="w-4 h-4 ml-0.5"></i>
+        </button>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <!-- =======================================================================
+       APPLICATION LOGIC & RUNTIME
+       ======================================================================= -->
+  <script>
+    // Global User Session State
+    let userSession = CampusBot.createSession();
+    let currentSenderPhone = "+919876541001";
+    let isTyping = false;
+
+    // Helper: Formatted Time HH:MM AM/PM
+    function getCurrentTime() {
+      const d = new Date();
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    // Helper: Format pseudo-markdown
+    function formatMessageContent(rawText) {
+      if (!rawText) return "";
+      let safe = rawText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      safe = safe.replace(/\*([^\*]+)\*/g, '<strong class="font-semibold text-white">$1</strong>');
+      safe = safe.replace(/_([^_]+)_/g, '<em class="text-wa-textMuted text-[11px] not-italic block mt-1">$1</em>');
+      safe = safe.replace(/`([^`]+)`/g, '<code class="bg-[#111b21] text-emerald-400 px-1 py-0.5 rounded font-mono text-[11px]">$1</code>');
+      safe = safe.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-wa-teal underline break-all hover:text-emerald-400">$1</a>');
+      safe = safe.replace(/\n/g, '<br>');
+
+      return safe;
+    }
+
+    // Update Header UI
+    function updateHeaderUI() {
+      const titleEl = document.getElementById('header-title');
+      const subtitleEl = document.getElementById('header-subtitle');
+      const avatarEl = document.getElementById('header-avatar-initials');
+
+      if (userSession.state === 'AUTH' && userSession.student) {
+        // Authenticated: show "CampusMitra • <Student Name>"
+        titleEl.textContent = `CampusMitra • ${userSession.student.name}`;
+        subtitleEl.textContent = "online";
+        avatarEl.textContent = userSession.student.name.charAt(0).toUpperCase();
+      } else {
+        // Unauthenticated: show only "CampusMitra"
+        titleEl.textContent = "CampusMitra";
+        subtitleEl.textContent = "online";
+        avatarEl.textContent = "CM";
+      }
+    }
+
+    // Render User Sent Bubble
+    function appendUserMessage(text) {
+      const list = document.getElementById('messages-list');
+      const row = document.createElement('div');
+      row.className = "flex justify-end";
+
+      row.innerHTML = `
+        <div class="bg-wa-sent text-wa-text text-xs sm:text-sm px-3.5 py-2 rounded-2xl rounded-tr-sm max-w-[85%] shadow bubble-sent leading-relaxed">
+          <span>${formatMessageContent(text)}</span>
+          <div class="text-[10px] text-emerald-200/70 flex items-center justify-end gap-1 mt-1 select-none">
+            <span>${getCurrentTime()}</span>
+            <i data-lucide="check-check" class="w-3.5 h-3.5 text-cyan-400 inline"></i>
+          </div>
+        </div>
+      `;
+
+      list.appendChild(row);
+      scrollToBottom();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Render Bot Reply Bubble
+    function appendBotMessage(msgObj) {
+      const list = document.getElementById('messages-list');
+      const text = msgObj.text || '';
+      const type = msgObj.type || 'bot';
+
+      // 1. System Notification Bubble
+      if (type === 'system') {
+        const row = document.createElement('div');
+        row.className = "flex justify-center my-1.5";
+        row.innerHTML = `
+          <div class="bg-[#182229] border border-wa-border/70 text-wa-textMuted text-[11px] px-3 py-1.5 rounded-xl shadow-sm text-center max-w-[90%] leading-snug">
+            ${formatMessageContent(text)}
+          </div>
+        `;
+        list.appendChild(row);
+        scrollToBottom();
+        return;
+      }
+
+      // 2. Demo SMS Carrier Bubble (Grey bubble)
+      if (type === 'sms') {
+        const row = document.createElement('div');
+        row.className = "flex justify-center my-1.5";
+        row.innerHTML = `
+          <div class="bg-[#243238] border-l-4 border-amber-400 text-wa-text text-xs px-3.5 py-2 rounded-r-xl shadow max-w-[92%]">
+            <div class="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-0.5">Carrier SMS Simulation</div>
+            <div class="font-mono">${formatMessageContent(text)}</div>
+          </div>
+        `;
+        list.appendChild(row);
+        scrollToBottom();
+        return;
+      }
+
+      // 3. QR Payment Bubble
+      if (type === 'qr' && msgObj.qrData) {
+        const d = msgObj.qrData;
+        const row = document.createElement('div');
+        row.className = "flex flex-col items-start max-w-[90%]";
+        
+        row.innerHTML = `
+          <div class="bg-wa-received border border-wa-border/50 text-wa-text text-xs sm:text-sm p-3.5 rounded-2xl rounded-tl-sm shadow bubble-received leading-relaxed w-full">
+            <div class="mb-2">${formatMessageContent(text)}</div>
+
+            <div class="bg-white p-3 rounded-xl flex flex-col items-center justify-center my-2 shadow">
+              <svg class="w-36 h-36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" fill="#ffffff" />
+                <rect x="10" y="10" width="26" height="26" fill="#000" rx="3"/>
+                <rect x="14" y="14" width="18" height="18" fill="#fff" rx="2"/>
+                <rect x="18" y="18" width="10" height="10" fill="#000" rx="1"/>
+                <rect x="64" y="10" width="26" height="26" fill="#000" rx="3"/>
+                <rect x="68" y="14" width="18" height="18" fill="#fff" rx="2"/>
+                <rect x="72" y="18" width="10" height="10" fill="#000" rx="1"/>
+                <rect x="10" y="64" width="26" height="26" fill="#000" rx="3"/>
+                <rect x="14" y="68" width="18" height="18" fill="#fff" rx="2"/>
+                <rect x="18" y="72" width="10" height="10" fill="#000" rx="1"/>
+                <rect x="42" y="12" width="6" height="6" fill="#000"/>
+                <rect x="52" y="12" width="6" height="6" fill="#000"/>
+                <rect x="42" y="24" width="16" height="6" fill="#000"/>
+                <rect x="52" y="44" width="8" height="6" fill="#000"/>
+                <circle cx="50" cy="50" r="9" fill="#005c4b"/>
+                <text x="50" y="53" font-size="7" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">MU</text>
+              </svg>
+              <span class="text-[10px] text-gray-800 font-mono mt-1 font-semibold">UPI: ${d.upiId}</span>
+              <span class="text-[10px] text-emerald-800 font-bold">Pay ₹${Number(d.amount).toLocaleString('en-IN')}</span>
+            </div>
+
+            <div class="text-[10px] text-wa-textMuted text-right mt-1">
+              ${getCurrentTime()}
+            </div>
+          </div>
+        `;
+
+        if (msgObj.buttons && msgObj.buttons.length > 0) {
+          row.appendChild(createButtonTray(msgObj.buttons));
+        }
+
+        list.appendChild(row);
+        scrollToBottom();
+        return;
+      }
+
+      // 4. Standard Received Bot Bubble
+      const row = document.createElement('div');
+      row.className = "flex flex-col items-start max-w-[88%]";
+
+      row.innerHTML = `
+        <div class="bg-wa-received border border-wa-border/50 text-wa-text text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow bubble-received leading-relaxed w-full">
+          <div>${formatMessageContent(text)}</div>
+          <div class="text-[10px] text-wa-textMuted text-right mt-1.5 select-none">
+            ${getCurrentTime()}
+          </div>
+        </div>
+      `;
+
+      if (msgObj.buttons && msgObj.buttons.length > 0) {
+        row.appendChild(createButtonTray(msgObj.buttons));
+      }
+
+      list.appendChild(row);
+      scrollToBottom();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Helper: Create Clickable Option Button Tray
+    function createButtonTray(buttons) {
+      const tray = document.createElement('div');
+      tray.className = "flex flex-wrap gap-1.5 mt-2 pl-1";
+
+      buttons.forEach(btn => {
+        const b = document.createElement('button');
+        b.type = "button";
+        b.className = "px-2.5 py-1 rounded-full text-[11px] font-medium bg-wa-input hover:bg-wa-teal hover:text-white text-wa-text border border-wa-border/80 transition active:scale-95 shadow-sm";
+        b.textContent = btn.label;
+        b.onclick = () => {
+          handleUserReply(btn.value);
+        };
+        tray.appendChild(b);
+      });
+
+      return tray;
+    }
+
+    function scrollToBottom() {
+      const container = document.getElementById('messages-container');
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 30);
+    }
+
+    function setTyping(visible) {
+      isTyping = visible;
+      const indicator = document.getElementById('typing-indicator');
+      const input = document.getElementById('user-input');
+      const sendBtn = document.getElementById('send-btn');
+
+      if (visible) {
+        indicator.classList.remove('hidden');
+        scrollToBottom();
+        input.disabled = true;
+        sendBtn.disabled = true;
+      } else {
+        indicator.classList.add('hidden');
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    // Process User Input through Bot Engine
+    function handleUserReply(userText) {
+      if (!userText || !userText.trim() || isTyping) return;
+
+      const trimmed = userText.trim();
+      appendUserMessage(trimmed);
+      document.getElementById('user-input').value = "";
+
+      setTyping(true);
+
+      setTimeout(() => {
+        syncLiveFacultyData();
+
+        // Call pure bot function: handle(session, userText, senderPhone, database)
+        const replies = CampusBot.handle(userSession, trimmed, currentSenderPhone, MU_DATA);
+
+        setTyping(false);
+        updateHeaderUI();
+
+        replies.forEach((r, idx) => {
+          setTimeout(() => {
+            appendBotMessage(r);
+          }, idx * 150);
+        });
+
+      }, 700);
+    }
+
+    function onFormSubmit(e) {
+      e.preventDefault();
+      sendMessageFromInput();
+    }
+
+    function sendMessageFromInput() {
+      const input = document.getElementById('user-input');
+      handleUserReply(input.value);
+    }
+
+    // SIMULATE SCAN ACTION
+    function startSimulatedScan() {
+      const phoneSelect = document.getElementById('demo-phone-select');
+      currentSenderPhone = phoneSelect.value;
+
+      // Reset session
+      userSession = CampusBot.createSession(currentSenderPhone);
+
+      // Clear message list
+      document.getElementById('messages-list').innerHTML = "";
+
+      // Transition views
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('chat-window').classList.remove('hidden');
+
+      updateHeaderUI();
+
+      // Automatically send "Hi" from this phone
+      appendUserMessage("Hi");
+
+      setTyping(true);
+      setTimeout(() => {
+        syncLiveFacultyData();
+        const replies = CampusBot.handle(userSession, "Hi", currentSenderPhone, MU_DATA);
+        setTyping(false);
+        updateHeaderUI();
+
+        replies.forEach((r, idx) => {
+          setTimeout(() => {
+            appendBotMessage(r);
+          }, idx * 150);
+        });
+      }, 700);
+    }
+
+    // RETURN TO START SCREEN ACTION
+    function returnToStartScreen() {
+      userSession = CampusBot.createSession();
+      document.getElementById('chat-window').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+    }
+
+    // Synchronize Faculty Status from localStorage
+    function syncLiveFacultyData() {
+      const saved = localStorage.getItem('campusmitra_faculty');
+      if (saved) {
+        try {
+          userSession.liveFaculty = JSON.parse(saved);
+        } catch (e) {}
+      }
+    }
+
+    window.addEventListener('storage', () => {
+      syncLiveFacultyData();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+      syncLiveFacultyData();
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Portal | CampusMitra AI</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wa: {
+              bg: '#111b21',
+              chatBg: '#0b141a',
+              header: '#202c33',
+              sent: '#005c4b',
+              received: '#202c33',
+              teal: '#00a884',
+              greenLight: '#25D366',
+              text: '#e9edef',
+              textMuted: '#8696a0',
+              input: '#2a3942',
+              border: '#222d34'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase Legacy SDK (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Central MU Database -->
+  <script src="data.js"></script>
+
+  <style>
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    /* Smooth toggle animation */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #25D366;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #25D366;
+    }
+  </style>
+</head>
+<body class="bg-wa-chatBg text-wa-text min-h-screen flex flex-col antialiased">
+
+  <!-- HEADER -->
+  <header class="bg-wa-header border-b border-wa-border px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white font-bold text-sm shadow">
+        MU
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-wa-text flex items-center gap-2">
+          CampusMitra Faculty Availability
+          <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-mono">
+            LIVE PORTAL
+          </span>
+        </h1>
+        <p class="text-xs text-wa-textMuted">Mandsaur University • Real-Time Presence Controller</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="app.html" target="_blank" class="text-xs bg-wa-input hover:bg-[#32444f] text-wa-text px-3 py-1.5 rounded-lg border border-wa-border flex items-center gap-1.5 transition">
+        <i data-lucide="message-square" class="w-3.5 h-3.5 text-wa-teal"></i>
+        <span>Open Student Chat</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- OFFLINE DEMO BANNER (Shown if Firebase is not active) -->
+  <div id="offline-banner" class="hidden bg-amber-950/60 border-b border-amber-800/80 px-6 py-2.5 flex items-center justify-between text-xs text-amber-300">
+    <div class="flex items-center gap-2">
+      <i data-lucide="wifi-off" class="w-4 h-4 text-amber-400"></i>
+      <span><strong>Offline demo mode:</strong> Synced instantly via localStorage across browser tabs. Updates reflect in <code class="bg-amber-900/50 px-1 py-0.5 rounded">app.html</code> without refresh.</span>
+    </div>
+    <span class="text-[11px] text-amber-400/80">Local Sync Active</span>
+  </div>
+
+  <!-- PERSONAL LINK NOTICE (Shown when ?f= is used) -->
+  <div id="personal-filter-notice" class="hidden bg-teal-950/60 border-b border-teal-800 px-6 py-2 flex items-center justify-between text-xs text-teal-300">
+    <div class="flex items-center gap-2">
+      <i data-lucide="user-check" class="w-4 h-4 text-teal-400"></i>
+      <span id="personal-filter-text">Personal Faculty Dashboard</span>
+    </div>
+    <a href="faculty.html" class="underline hover:text-white transition">Show All Faculty</a>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-6 md:p-8 space-y-6">
+
+    <!-- Instructions / Subtitle -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-wa-border">
+      <div>
+        <h2 class="text-lg font-semibold text-white">Faculty Presence Switcher</h2>
+        <p class="text-xs text-wa-textMuted mt-0.5">Toggle your availability status. Changes are published live to verified student WhatsApp sessions.</p>
+      </div>
+      <div id="connection-status" class="text-xs px-3 py-1 rounded-full bg-wa-header text-wa-textMuted border border-wa-border flex items-center gap-2 self-start sm:self-auto">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span>Initializing...</span>
+      </div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Injected via JavaScript -->
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-wa-header border-t border-wa-border py-4 px-6 text-center text-xs text-wa-textMuted">
+    Answers come only from MU verified records. • Mandsaur University ANANT 1.0 Hackathon
+  </footer>
+
+  <!-- =========================================================================
+       FIREBASE CONFIGURATION & PORTAL LOGIC
+       ========================================================================= -->
+  <script>
+    // =========================================================================
+    // 1. FIREBASE CONFIGURATION (Replace placeholders with your Firebase Console values)
+    // Project ID: campusmitra-667b6
+    // Where to find: Firebase Console -> Project Settings -> General -> "Your apps"
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "PASTE_HERE_API_KEY", // e.g. "AIzaSy..."
+      authDomain: "campusmitra-667b6.firebaseapp.com",
+      projectId: "campusmitra-667b6",
+      storageBucket: "campusmitra-667b6.appspot.com",
+      messagingSenderId: "PASTE_HERE_SENDER_ID",
+      appId: "PASTE_HERE_APP_ID"
+    };
+
+    // Application state
+    let isFirebaseReady = false;
+    let firestoreDb = null;
+    let facultyData = [];
+
+    // Format current time HH:MM AM/PM
+    function getFormattedTime() {
+      const now = new Date();
+      return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    // Initialize data from data.js & localStorage
+    function loadInitialFaculty() {
+      const saved = localStorage.getItem('campusmitra_faculty');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.warn("Failed to parse cached faculty, using MU_DATA seed");
+        }
+      }
+      return JSON.parse(JSON.stringify(MU_DATA.faculty));
+    }
+
+    // Save to localStorage and notify other tabs
+    function saveToLocalStorage(data) {
+      localStorage.setItem('campusmitra_faculty', JSON.stringify(data));
+      // Dispatch storage event manually for same window / other frames
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    // Initialize Firebase or trigger offline fallback
+    function initFirebase() {
+      const isPlaceholder = !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("PASTE_HERE");
+
+      if (isPlaceholder || typeof firebase === 'undefined') {
+        console.info("[Faculty Portal] Firebase config has placeholders. Operating in localStorage fallback mode.");
+        enableOfflineMode();
+        return;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        firestoreDb = firebase.firestore();
+
+        // Test Firestore connection & seed if collection is empty
+        firestoreDb.collection("faculty").onSnapshot((snapshot) => {
+          isFirebaseReady = true;
+          document.getElementById('connection-status').innerHTML = `
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-emerald-400">Cloud Firestore Connected</span>
+          `;
+          document.getElementById('offline-banner').classList.add('hidden');
+
+          if (snapshot.empty) {
+            // Seed documents into Firestore
+            console.log("[Firestore] Seeding faculty documents...");
+            facultyData.forEach((fac) => {
+              firestoreDb.collection("faculty").doc(fac.id).set({
+                id: fac.id,
+                name: fac.name,
+                department: fac.department,
+                available: fac.available,
+                updatedAt: fac.updatedAt || getFormattedTime()
+              });
+            });
+          } else {
+            // Sync from Firestore snapshot
+            const remote = [];
+            snapshot.forEach((doc) => remote.push(doc.data()));
+            facultyData = remote;
+            saveToLocalStorage(facultyData);
+            renderCards();
+          }
+        }, (err) => {
+          console.warn("[Firestore] Live sync failed, falling back to localStorage:", err);
+          enableOfflineMode();
+        });
+
+      } catch (err) {
+        console.warn("[Firebase] Init error, falling back to localStorage:", err);
+        enableOfflineMode();
+      }
+    }
+
+    function enableOfflineMode() {
+      isFirebaseReady = false;
+      document.getElementById('offline-banner').classList.remove('hidden');
+      document.getElementById('connection-status').innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span class="text-amber-400">Offline Demo Mode</span>
+      `;
+      saveToLocalStorage(facultyData);
+      renderCards();
+    }
+
+    // Toggle faculty availability
+    function toggleFaculty(facultyId, newStatus) {
+      const nowTime = getFormattedTime();
+
+      const fac = facultyData.find(f => f.id === facultyId);
+      if (!fac) return;
+
+      fac.available = newStatus;
+      fac.updatedAt = nowTime;
+
+      // 1. Update localStorage for instant tab sync
+      saveToLocalStorage(facultyData);
+
+      // 2. Update Firestore if connected
+      if (isFirebaseReady && firestoreDb) {
+        firestoreDb.collection("faculty").doc(facultyId).set({
+          id: fac.id,
+          name: fac.name,
+          department: fac.department,
+          available: fac.available,
+          updatedAt: fac.updatedAt
+        }, { merge: true }).catch(err => {
+          console.error("Firestore update error:", err);
+        });
+      }
+
+      // 3. Re-render UI
+      renderCards();
+    }
+
+    // Render cards (handles ?f= filter param)
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+
+      // Check URL query parameters for personal filter: e.g. ?f=sharma or ?f=fac_nidhi
+      const params = new URLSearchParams(window.location.search);
+      const filterKey = (params.get('f') || '').toLowerCase().trim();
+
+      let displayList = facultyData;
+      if (filterKey) {
+        displayList = facultyData.filter(f => 
+          f.id.toLowerCase().includes(filterKey) || 
+          f.name.toLowerCase().includes(filterKey)
+        );
+
+        const notice = document.getElementById('personal-filter-notice');
+        const noticeText = document.getElementById('personal-filter-text');
+        if (displayList.length > 0) {
+          notice.classList.remove('hidden');
+          noticeText.textContent = `Viewing Personal Dashboard: ${displayList[0].name} (${displayList[0].department})`;
+        } else {
+          // If no match found, fallback to showing all
+          displayList = facultyData;
+          notice.classList.add('hidden');
+        }
+      } else {
+        document.getElementById('personal-filter-notice').classList.add('hidden');
+      }
+
+      displayList.forEach(fac => {
+        const isAvail = fac.available;
+        const card = document.createElement('div');
+        card.className = `bg-wa-header border rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-lg ${
+          isAvail 
+            ? 'border-emerald-600/60 shadow-emerald-950/20' 
+            : 'border-rose-800/40 shadow-rose-950/10 opacity-90'
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <!-- Card Header Badge -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[11px] px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5 ${
+                isAvail 
+                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/60' 
+                  : 'bg-rose-950/80 text-rose-400 border border-rose-800/60'
+              }">
+                <span class="w-2 h-2 rounded-full ${isAvail ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}"></span>
+                <span>${isAvail ? 'Available in Cabin' : 'Not Available / In Lecture'}</span>
+              </span>
+
+              <a href="faculty.html?f=${fac.id}" title="Personal Link" class="text-wa-textMuted hover:text-wa-teal transition text-xs flex items-center gap-1">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+
+            <!-- Faculty Info -->
+            <div class="space-y-1 mb-6">
+              <h3 class="text-xl font-bold text-white tracking-tight">${fac.name}</h3>
+              <p class="text-sm text-wa-teal font-medium">${fac.department}</p>
+            </div>
+          </div>
+
+          <!-- Big Toggle Switcher Area -->
+          <div class="pt-5 border-t border-wa-border/80 flex items-center justify-between">
+            <div>
+              <span class="text-xs text-wa-textMuted block">Current Presence:</span>
+              <span class="text-sm font-semibold ${isAvail ? 'text-emerald-400' : 'text-rose-400'}">
+                ${isAvail ? 'ON (Available)' : 'OFF (Busy)'}
+              </span>
+            </div>
+
+            <!-- Custom Modern Switch -->
+            <label class="relative inline-flex items-center cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                class="sr-only peer" 
+                ${isAvail ? 'checked' : ''} 
+                onchange="toggleFaculty('${fac.id}', this.checked)"
+              />
+              <div class="w-14 h-8 bg-wa-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+            </label>
+          </div>
+
+          <!-- Last Updated Time -->
+          <div class="mt-4 pt-3 border-t border-wa-border/50 text-[11px] text-wa-textMuted flex items-center justify-between">
+            <span class="flex items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3 text-wa-teal"></i>
+              <span>Last updated: <strong>${fac.updatedAt || 'Recently'}</strong></span>
+            </span>
+            <span class="text-emerald-500 font-mono text-[10px]">SYNCED</span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Refresh Lucide Icons
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Listen for storage changes from other tabs
+    window.addEventListener('storage', (e) => {
+      const saved = localStorage.getItem('campusmitra_faculty');
+      if (saved) {
+        try {
+          facultyData = JSON.parse(saved);
+          renderCards();
+        } catch (err) {}
+      }
+    });
+
+    // Startup
+    document.addEventListener('DOMContentLoaded', () => {
+      facultyData = loadInitialFaculty();
+      renderCards();
+      initFirebase();
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
