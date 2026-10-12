@@ -11,6 +11,13 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: NODE_VERSION
+        value: 20
       - key: TWILIO_NUMBER
         value: "whatsapp:+17372508034"
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+
 
